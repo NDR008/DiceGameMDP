@@ -45,19 +45,20 @@ class MyAgent(DiceGameAgent):
 
         poss_act = self.game.actions
         zeroed_acts = {}
-        #for act in poss_act:
-        #    zeroed_acts[(act)] = 0
+        for act in poss_act:
+            zeroed_acts[(act)] = 0
 
         run_next_states = {}
         for each_state in poss_states:
             for act in poss_act:
                 run_next_states[(act, each_state)] = self.game.get_next_states(act, each_state)
 
+        
         while 1:
             delta = 0
             for each_state in poss_states:
-                temp = self.vals0[each_state][0]
                 acts = zeroed_acts.copy()
+                temp = self.vals0[each_state][0]
                 for act in poss_act:
                     (state_dashes, flag, reward, probability)  = run_next_states[(act, each_state)]
                     for prob_pos, each_probability in enumerate(probability):
@@ -123,7 +124,7 @@ def main():
 
                 np.random.seed(1)
                 #game = DiceGame()
-                game = DiceGame(dice=7)
+                game = DiceGame(dice=6)
                 agent2 = MyAgent(game, theta, gamma)
 
                 for i in range(cycle):
