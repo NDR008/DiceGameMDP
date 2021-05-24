@@ -49,7 +49,7 @@ class MyAgent(DiceGameAgent):
             zeroed_acts[(act)] = 0
 
         loop = 0
-        while 1:
+        for i in range(1):
             loop += 1
             delta = 0
             for each_state in poss_states:
@@ -67,13 +67,36 @@ class MyAgent(DiceGameAgent):
                 best_action_val = max(acts.values())
                 best_action = max(acts, key=acts.get)
                 self.vals0[each_state] = [best_action_val, best_action]
-            delta = max(delta, abs(temp - self.vals0[each_state][0]))
+                delta = max(delta, abs(temp - self.vals0[each_state][0]))
             delta_time = time.process_time()-start_time
             if delta < self.theta or delta_time > 25:
                 break
         if debug: print(delta, time.process_time()-start_time)
-        
-        
+
+        # policy improvement after a single pass of value iteration
+        while 1:
+            policy_stable = True
+            for each_state in poss_states:
+                temp = self.vals0[each_state][1]
+                acts = zeroed_acts.copy()
+                for act in poss_act:
+                    (state_dashes, flag, reward, probability)  = self.game.get_next_states(act, each_state)
+                    for prob_pos, each_probability in enumerate(probability):
+                        if not flag:
+                            state_dash = state_dashes[prob_pos]
+                            acts[act] += each_probability * (reward + self.gamma * self.vals0[state_dash][0])
+                        else:
+                            # acts[act] += each_probability * (reward + 0 * self.vals0[state_dash][0])
+                            acts[act] += each_probability * (reward)
+                best_action_val = max(acts.values())
+                best_action = max(acts, key=acts.get)
+                self.vals0[each_state] = [best_action_val, best_action]
+                if temp != self.vals0[each_state][1]:
+                    policy_stable = False
+                    #print(temp, self.vals0[each_state][1])
+            if policy_stable:
+                break
+
 
     def play(self, state):
         # maybe if we are in the winning state, we can skip evaluating
@@ -118,7 +141,7 @@ def main():
 
                 np.random.seed(1)
                 #game = DiceGame()
-                game = DiceGame(5, 6, None, None, 1)
+                game = DiceGame(3, 6, None, None, 1)
                 agent2 = MyAgent(game, theta, gamma)
 
                 for i in range(cycle):

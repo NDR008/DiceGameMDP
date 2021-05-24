@@ -28,22 +28,30 @@ class PerfectionistAgent(DiceGameAgent):
 ###############################################################
 
 class MyAgent(DiceGameAgent):
-    def __init__(self, game):
-        # import time
-        # start_time = time.process_time()
+    def __init__(self, game, theta = 0.01, gamma = 0.9):
+        debug = True
+
+        import time
+        start_time = time.process_time()
         super().__init__(game)
-        self.gamma = 0.7
-        self.theta = 0.01
-        poss_act = self.game.actions
+        self.gamma = gamma
+        self.theta = theta
+
         poss_states = self.game.states
         self.vals0 = {}
         for each_state in poss_states:
             self.vals0[(each_state)] = [0, None]
+        # value iteration
 
+        poss_act = self.game.actions
         zeroed_acts = {}
-        for act in poss_act:
-            zeroed_acts[(act)] = 0
+        #for act in poss_act:
+        #    zeroed_acts[(act)] = 0
 
+        run_next_states = {}
+        for each_state in poss_states:
+            for act in poss_act:
+                run_next_states[(act, each_state)] = self.game.get_next_states(act, each_state)
 
         while 1:
             delta = 0
@@ -51,26 +59,29 @@ class MyAgent(DiceGameAgent):
                 temp = self.vals0[each_state][0]
                 acts = zeroed_acts.copy()
                 for act in poss_act:
-                    (state_dashes, flag, reward, probability)  = self.game.get_next_states(act, each_state)
+                    (state_dashes, flag, reward, probability)  = run_next_states[(act, each_state)]
                     for prob_pos, each_probability in enumerate(probability):
                         if not flag:
                             state_dash = state_dashes[prob_pos]
                             acts[act] += each_probability * (reward + self.gamma * self.vals0[state_dash][0])
                         else:
-                            acts[act] += each_probability * reward
+                            # acts[act] += each_probability * (reward + 0 * self.vals0[state_dash][0])
+                            acts[act] += each_probability * (reward)
                 best_action_val = max(acts.values())
                 best_action = max(acts, key=acts.get)
                 self.vals0[each_state] = [best_action_val, best_action]
-            delta = max(delta, abs(temp - self.vals0[each_state][0]))
-            if delta < self.theta:
+                delta = max(delta, abs(temp - self.vals0[each_state][0]))
+            delta_time = time.process_time()-start_time
+            if delta < self.theta or delta_time > 9999:
                 break
-        # end_time = time.process_time()
-        # print(end_time-start_time)
+        if debug: print(delta, time.process_time()-start_time)
+        
+        
 
     def play(self, state):
         # maybe if we are in the winning state, we can skip evaluating
         return self.vals0[state][1]
-
+    
 ###############################################################
         
 def play_game_with_agent(agent, game, verbose=False):
@@ -101,18 +112,32 @@ def main():
     # change the number to see different results
     #  or delete the line to make it change each time it is run
 
-    np.random.seed(1)
-    #game = DiceGame(3,6,None,None,5)
-    game = DiceGame()
-    agent2 = MyAgent(game)
+    #a=[10,100,10000]
+    a=[10000]
+    thetas = [0.01, 0.00001, 0.0000000001]
+    thetas = [0.01]
     b = []
-    a=[5,50,500,5000,50000]
     for cycle in a:
-        for i in range(cycle):
-            # agent1 = AlwaysHold(game)
-            # play_game_with_agent(agent1, game, verbose=True)
-            b.append(play_game_with_agent(agent2, game, verbose=False))
+        for theta in thetas:
+            for gamma in [1.0]:
 
-        print("in ", cycle, " cycles... min score:", min(b), "max score:", max(b), "average:", np.average(b))
+                np.random.seed(1)
+                #game = DiceGame()
+                game = DiceGame(dice=7)
+                agent2 = MyAgent(game, theta, gamma)
+
+                for i in range(cycle):
+                    # agent1 = AlwaysHold(game)
+                    # play_game_with_agent(agent1, game, verbose=True)
+                    b.append(play_game_with_agent(agent2, game, verbose=False))
+                print(theta, "\t", gamma,  "\t", cycle,  "\t", min(b),  "\t", max(b),  "\t", np.average(b))
+                import matplotlib.pyplot as plt
+                plt.hist(b, bins = range(-20,20))
+                title  = "Game_results " + str(theta) + " - " + str(gamma)
+                file = title + ".png"
+                plt.title(title)
+                plt.savefig(file)
+                plt.clf()
+                b = []
 if __name__ == "__main__":
     main()
