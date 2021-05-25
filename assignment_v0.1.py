@@ -70,9 +70,9 @@ class MyAgent(DiceGameAgent):
                         max_val = accu
                         max_act = act
                 self.vals0[each_state] = [max_val, max_act]
-                delta = max(dandelta, abs(temp - self.vals0[each_state][0]))
+                delta = max(delta, abs(temp - self.vals0[each_state][0]))
             delta_time = time.process_time()-start_time
-            if delta < self.theta or delta_time > 9999:
+            if delta < self.theta or delta_time > 25:
                 break
         if debug: print(delta, time.process_time()-start_time)
         
@@ -123,7 +123,7 @@ def main():
 
                 np.random.seed(1)
                 #game = DiceGame()
-                game = DiceGame(dice=7)
+                game = DiceGame(dice=6)
                 agent2 = MyAgent(game, theta, gamma)
 
                 for i in range(cycle):
