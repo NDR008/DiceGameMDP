@@ -40,7 +40,7 @@ class MyAgent(DiceGameAgent):
         poss_states = self.game.states
         self.vals0 = {}
         for each_state in poss_states:
-            self.vals0[(each_state)] = [0, None]
+            self.vals0[(each_state)] = [0, None, False]
         # value iteration
 
         poss_act = self.game.actions
@@ -50,12 +50,16 @@ class MyAgent(DiceGameAgent):
             for act in poss_act:
                 run_next_states[(act, each_state)] = self.game.get_next_states(act, each_state)
         
-        while 1:
+        finished = False
+        while not finished:
             delta = 0
+            finished = True
             for each_state in poss_states:
                 #acts = zeroed_acts.copy()
                 max_val = 0
                 max_act = 0
+                if self.vals0[each_state][2]:
+                    continue
                 temp = self.vals0[each_state][0]
                 for act in poss_act:
                     accu = 0
@@ -71,10 +75,15 @@ class MyAgent(DiceGameAgent):
                         max_act = act
                 self.vals0[each_state] = [max_val, max_act]
                 delta = max(delta, abs(temp - self.vals0[each_state][0]))
+                if delta < self.theta:
+                    self.vals0[each_state] = [max_val, max_act, True]
+                else:
+                    finished = False 
+                    self.vals0[each_state] = [max_val, max_act, False]
             delta_time = time.process_time()-start_time
-            if delta < self.theta or delta_time > 25:
+            if finished:
                 break
-        if debug: print(delta, time.process_time()-start_time)
+        if debug: print("delta & init time", delta, time.process_time()-start_time)
         
         
 
@@ -123,7 +132,7 @@ def main():
 
                 np.random.seed(1)
                 #game = DiceGame()
-                game = DiceGame(dice=6)
+                game = DiceGame(dice=3)
                 agent2 = MyAgent(game, theta, gamma)
 
                 for i in range(cycle):
