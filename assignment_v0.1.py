@@ -75,9 +75,9 @@ class MyAgent(DiceGameAgent):
                     finished = False 
                     self.vals0[each_state] = [new_val, None, False]
             delta_time = time.process_time()-start_time
-            if finished or delta_time < 22:  # fear of timeout
+            if finished or delta_time > 22:  # fear of timeout
                 break
-        if debug: print("delta & init time", delta, time.process_time()-start_time)
+
         
         
         max_val = 0
@@ -92,11 +92,11 @@ class MyAgent(DiceGameAgent):
                         new_val += each_probability * (reward + self.gamma * self.vals0[state_dash][0])
                     else:
                         new_val += each_probability * (reward)
-                if new_val > max_val:
+                if new_val >= max_val:
                         max_val = new_val
                         max_act = act        # this is the hybrid stage of argmax
                 self.vals0[each_state] = [max_val, max_act]
-        
+        if debug: print("delta & init time", delta, time.process_time()-start_time)
 
     def play(self, state):
         # maybe if we are in the winning state, we can skip evaluating
