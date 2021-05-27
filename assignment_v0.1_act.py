@@ -37,31 +37,28 @@ class MyAgent(DiceGameAgent):
         self.gamma = gamma
         self.theta = theta
 
+        poss_act = self.game.actions
+        #choices = len(poss_act)
         poss_states = self.game.states
         self.vals0 = {}
         for each_state in poss_states:
-            self.vals0[(each_state)] = [0, None, False]
-
-        poss_act = self.game.actions
+            #self.vals0[(each_state)] = [0, poss_act[np.random.randint(choices)]]
+            self.vals0[(each_state)] = [0, poss_act[-1]]
         
         run_next_states = {}
         for each_state in poss_states:
             for act in poss_act:
                 run_next_states[(act, each_state)] = self.game.get_next_states(act, each_state)
-        
-        finished = False
-        while not finished:
-            delta = 0
-            finished = True
-            for each_state in poss_states:
 
+        pre_load = time.process_time() - start_time
+        i = 0
+        while 1:
+            i += 1
+            convergence = 1  # hopefully
+            for each_state in poss_states:
+                old_act = self.vals0[each_state][1]
                 max_val = 0
                 max_act = 0
-                # small slowdown for the if, but can skip state-values that are matured
-                if self.vals0[each_state][2]: 
-                    continue
-                temp = self.vals0[each_state][0]
-                
                 for act in poss_act:
                     new_val = 0
                     (state_dashes, flag, reward, probability)  = run_next_states[(act, each_state)]
@@ -75,19 +72,16 @@ class MyAgent(DiceGameAgent):
                         max_val = new_val
                         max_act = act        # this is the hybrid stage of argmax
                 self.vals0[each_state] = [max_val, max_act]
-                delta = abs(temp - self.vals0[each_state][0])
-                if delta < self.theta:
-                    self.vals0[each_state] = [max_val, max_act, True]
-                else:
-                    finished = False 
-                    self.vals0[each_state] = [max_val, max_act, False]
-            delta_time = time.process_time()-start_time
-            if finished or delta_time > 22:  # fear of timeout
+                if self.vals0[each_state][1] != old_act:
+                    convergence = 0  # need to try again
+            delta_time = time.process_time() - start_time
+            response_time = (delta_time-pre_load) / i
+            next_loop_time = response_time + delta_time
+            if convergence or next_loop_time > 30:
+                print(self.vals0)
                 break
-        if debug: print("delta & init time", delta, time.process_time()-start_time)
+        if debug: print("Policy based init time",pre_load, time.process_time()-start_time-pre_load, i)
         
-        
-
     def play(self, state):
         # maybe if we are in the winning state, we can skip evaluating
         return self.vals0[state][1]
@@ -123,17 +117,17 @@ def main():
     #  or delete the line to make it change each time it is run
 
     #a=[10,100,10000]
-    a=[10000]
-    thetas = [0.01, 0.00001, 0.0000000001]
+    a = [100000]
     thetas = [0.01]
+    #thetas = [0.1]
     b = []
     for cycle in a:
         for theta in thetas:
-            for gamma in [1.0]:
+            for gamma in [1]:
 
                 np.random.seed(1)
                 #game = DiceGame()
-                game = DiceGame(dice=4, penalty=5)
+                game =  DiceGame(dice=2, sides=3, values=[1, 2, 6], bias=[0.5, 0.1, 0.4], penalty=2)
                 agent2 = MyAgent(game, theta, gamma)
 
                 for i in range(cycle):
@@ -143,7 +137,7 @@ def main():
                 print(theta, "\t", gamma,  "\t", cycle,  "\t", min(b),  "\t", max(b),  "\t", np.average(b))
                 import matplotlib.pyplot as plt
                 plt.hist(b, bins = range(-20,20))
-                title  = "2Game_results " + str(theta) + " - " + str(gamma)
+                title  = "Policy_iter: Game_results " + str(theta) + " - " + str(gamma)
                 file = title + ".png"
                 plt.title(title)
                 plt.savefig(file)
