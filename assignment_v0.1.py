@@ -41,7 +41,6 @@ class MyAgent(DiceGameAgent):
         self.vals0 = {}
         for each_state in poss_states:
             self.vals0[(each_state)] = [0, None, False]
-        # value iteration
 
         poss_act = self.game.actions
         
@@ -55,24 +54,26 @@ class MyAgent(DiceGameAgent):
             delta = 0
             finished = True
             for each_state in poss_states:
-                #acts = zeroed_acts.copy()
+
                 max_val = 0
                 max_act = 0
-                if self.vals0[each_state][2]:
+                # small slowdown for the if, but can skip state-values that are matured
+                if self.vals0[each_state][2]: 
                     continue
                 temp = self.vals0[each_state][0]
+                
                 for act in poss_act:
-                    accu = 0
+                    new_val = 0
                     (state_dashes, flag, reward, probability)  = run_next_states[(act, each_state)]
                     for prob_pos, each_probability in enumerate(probability):
                         if not flag:
                             state_dash = state_dashes[prob_pos]
-                            accu += each_probability * (reward + self.gamma * self.vals0[state_dash][0])
+                            new_val += each_probability * (reward + self.gamma * self.vals0[state_dash][0])
                         else:
-                            accu += each_probability * (reward)
-                    if accu > max_val:
-                        max_val = accu
-                        max_act = act
+                            new_val += each_probability * (reward)
+                    if new_val > max_val:
+                        max_val = new_val
+                        max_act = act        # this is the hybrid stage of argmax
                 self.vals0[each_state] = [max_val, max_act]
                 delta = max(delta, abs(temp - self.vals0[each_state][0]))
                 if delta < self.theta:
@@ -82,7 +83,7 @@ class MyAgent(DiceGameAgent):
                     self.vals0[each_state] = [max_val, max_act, False]
                 print("state is", self.vals0[each_state][2])
             delta_time = time.process_time()-start_time
-            if finished:
+            if finished or delta_time < 22:  # fear of timeout
                 break
         if debug: print("delta & init time", delta, time.process_time()-start_time)
         
@@ -133,7 +134,7 @@ def main():
 
                 np.random.seed(1)
                 #game = DiceGame()
-                game = DiceGame(dice=5)
+                game = DiceGame(dice=4, penalty=5)
                 agent2 = MyAgent(game, theta, gamma)
 
                 for i in range(cycle):
