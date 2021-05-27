@@ -40,7 +40,7 @@ class MyAgent(DiceGameAgent):
         poss_states = self.game.states
         self.vals0 = {}
         for each_state in poss_states:
-            self.vals0[(each_state)] = [0, None]
+            self.vals0[(each_state)] = [0, None, False]
         # value iteration
 
         poss_act = self.game.actions
@@ -50,12 +50,19 @@ class MyAgent(DiceGameAgent):
             for act in poss_act:
                 run_next_states[(act, each_state)] = self.game.get_next_states(act, each_state)
         
-        while 1:
+        finished = False
+        i = 0
+        while not finished:
             delta = 0
+            finished = True
             for each_state in poss_states:
                 #acts = zeroed_acts.copy()
                 max_val = 0
                 max_act = 0
+                print("state is", self.vals0[each_state][2])
+                if self.vals0[each_state][2]:
+                    continue
+                i = i +1
                 temp = self.vals0[each_state][0]
                 for act in poss_act:
                     accu = 0
@@ -71,10 +78,17 @@ class MyAgent(DiceGameAgent):
                         max_act = act
                 self.vals0[each_state] = [max_val, max_act]
                 delta = max(delta, abs(temp - self.vals0[each_state][0]))
+                if delta < self.theta:
+                    self.vals0[each_state] = [max_val, max_act, True]
+                else:
+                    finished = False 
+                    self.vals0[each_state] = [max_val, max_act, False]
+                print("state is", self.vals0[each_state][2])
             delta_time = time.process_time()-start_time
-            if delta < self.theta or delta_time > 25:
+            if finished:
+                print("operations i", i)
                 break
-        if debug: print(delta, time.process_time()-start_time)
+        if debug: print("delta & init time", delta, time.process_time()-start_time)
         
         
 
@@ -115,7 +129,7 @@ def main():
     #a=[10,100,10000]
     a=[10000]
     thetas = [0.01, 0.00001, 0.0000000001]
-    thetas = [0.01]
+    thetas = [55]
     b = []
     for cycle in a:
         for theta in thetas:
@@ -123,7 +137,7 @@ def main():
 
                 np.random.seed(1)
                 #game = DiceGame()
-                game = DiceGame(dice=6)
+                game = DiceGame(dice=5)
                 agent2 = MyAgent(game, theta, gamma)
 
                 for i in range(cycle):
