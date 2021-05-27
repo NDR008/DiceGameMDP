@@ -51,7 +51,6 @@ class MyAgent(DiceGameAgent):
                 run_next_states[(act, each_state)] = self.game.get_next_states(act, each_state)
         
         finished = False
-        i = 0
         while not finished:
             delta = 0
             finished = True
@@ -59,10 +58,8 @@ class MyAgent(DiceGameAgent):
                 #acts = zeroed_acts.copy()
                 max_val = 0
                 max_act = 0
-                print("state is", self.vals0[each_state][2])
                 if self.vals0[each_state][2]:
                     continue
-                i = i +1
                 temp = self.vals0[each_state][0]
                 for act in poss_act:
                     accu = 0
@@ -86,7 +83,6 @@ class MyAgent(DiceGameAgent):
                 print("state is", self.vals0[each_state][2])
             delta_time = time.process_time()-start_time
             if finished:
-                print("operations i", i)
                 break
         if debug: print("delta & init time", delta, time.process_time()-start_time)
         
