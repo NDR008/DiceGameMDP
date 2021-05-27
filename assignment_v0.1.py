@@ -81,6 +81,7 @@ class MyAgent(DiceGameAgent):
                 else:
                     finished = False 
                     self.vals0[each_state] = [max_val, max_act, False]
+                print("state is", self.vals0[each_state][2])
             delta_time = time.process_time()-start_time
             if finished or delta_time < 22:  # fear of timeout
                 break
@@ -125,7 +126,7 @@ def main():
     #a=[10,100,10000]
     a=[10000]
     thetas = [0.01, 0.00001, 0.0000000001]
-    thetas = [0.01]
+    thetas = [55]
     b = []
     for cycle in a:
         for theta in thetas:
