@@ -135,7 +135,7 @@ def main():
     #a=[10,100,10000]
     a=[10000]
     thetas = [0.01, 0.00001, 0.0000000001]
-    thetas = [0.01]
+    thetas = [55]
     b = []
     for cycle in a:
         for theta in thetas:
