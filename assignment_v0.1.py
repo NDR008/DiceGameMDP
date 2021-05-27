@@ -54,9 +54,6 @@ class MyAgent(DiceGameAgent):
             delta = 0
             finished = True
             for each_state in poss_states:
-
-                max_val = 0
-                max_act = 0
                 # small slowdown for the if, but can skip state-values that are matured
                 if self.vals0[each_state][2]: 
                     continue
@@ -71,23 +68,35 @@ class MyAgent(DiceGameAgent):
                             new_val += each_probability * (reward + self.gamma * self.vals0[state_dash][0])
                         else:
                             new_val += each_probability * (reward)
-                    if new_val > max_val:
+                delta = max(delta, abs(temp - self.vals0[each_state][0]))
+                if delta < self.theta:
+                    self.vals0[each_state] = [new_val, None, True]
+                else:
+                    finished = False 
+                    self.vals0[each_state] = [new_val, None, False]
+            delta_time = time.process_time()-start_time
+            if finished or delta_time > 22:  # fear of timeout
+                break
+
+        
+        
+        max_val = 0
+        max_act = 0
+        for each_state in poss_states:
+            for act in poss_act:
+                new_val = 0
+                (state_dashes, flag, reward, probability)  = run_next_states[(act, each_state)]
+                for prob_pos, each_probability in enumerate(probability):
+                    if not flag:
+                        state_dash = state_dashes[prob_pos]
+                        new_val += each_probability * (reward + self.gamma * self.vals0[state_dash][0])
+                    else:
+                        new_val += each_probability * (reward)
+                if new_val >= max_val:
                         max_val = new_val
                         max_act = act        # this is the hybrid stage of argmax
                 self.vals0[each_state] = [max_val, max_act]
-                delta = max(delta, abs(temp - self.vals0[each_state][0]))
-                if delta < self.theta:
-                    self.vals0[each_state] = [max_val, max_act, True]
-                else:
-                    finished = False 
-                    self.vals0[each_state] = [max_val, max_act, False]
-                print("state is", self.vals0[each_state][2])
-            delta_time = time.process_time()-start_time
-            if finished or delta_time < 22:  # fear of timeout
-                break
         if debug: print("delta & init time", delta, time.process_time()-start_time)
-        
-        
 
     def play(self, state):
         # maybe if we are in the winning state, we can skip evaluating
