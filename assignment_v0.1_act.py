@@ -52,7 +52,7 @@ class MyAgent(DiceGameAgent):
 
         pre_load = time.process_time() - start_time
         i = 0
-        for extra in range(1):  # just for the rare possibility that the values lack of convergence will cause an issue
+        for extra in range(3):  # just for the rare possibility that the values lack of convergence will cause an issue
             while 1:
                 i += 1
                 convergence = 1  # hopefully
