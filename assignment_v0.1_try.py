@@ -40,19 +40,19 @@ class MyAgent(DiceGameAgent):
         poss_states = self.game.states
         self.vals0 = {}
         for each_state in poss_states:
-            self.vals0[(each_state)] = [0, None]
+            self.vals0[(each_state)] = [-1, None]
 
         poss_act = self.game.actions
         
         run_next_states = {}
-        min_reward = 0
         for each_state in poss_states:
             for act in poss_act:
                 run_next_states[(act, each_state)] = self.game.get_next_states(act, each_state)
 
         pre_load = time.process_time() - start_time
         i = 0
-        while 1:
+        for n in range(10):
+            print("t = ",i)
             i += 1
             delta = 0
             for each_state in poss_states:
@@ -68,16 +68,22 @@ class MyAgent(DiceGameAgent):
                             new_val += each_probability * (reward + self.gamma * self.vals0[state_dash][0])
                         else:
                             new_val += each_probability * (reward)
+                    print("for state:", each_state, "act:", act, "the value is:", new_val)
                     if new_val > max_val:
                         max_val = new_val
                         max_act = act        # this is the hybrid stage of argmax
+                    print("for state:", each_state, "with act:", max_act, "max value is:", max_val)
+                    print()
                 self.vals0[each_state] = [max_val, max_act]
+                print("for now, best actions is ", max_act, "to get a hopeful value of", max_val)
+                print()
+                print()
                 delta = max(delta, abs(temp - self.vals0[each_state][0]))
             delta_time = time.process_time() - start_time
             response_time = (delta_time - pre_load) / i
             next_loop_time = response_time + delta_time
-            if delta < self.theta or next_loop_time > 30:
-                break
+            #if delta < self.theta or next_loop_time > 30:
+                #break
         if debug: print("Value based init time",pre_load, time.process_time()-start_time-pre_load, i)
         self.time = time.process_time() - start_time
         self.loops = i
@@ -117,19 +123,21 @@ def main():
     # change the number to see different results
     #  or delete the line to make it change each time it is run
 
-    n = [100000]
-    thetas = [0.001]
+    n = [1000]
+    thetas = [0.00001]
     gammas = [1]
     results = []
-    penalties = [0.5,0,1]
+    penalties = [1]
     for cycle in n:
         for val in penalties:
             for theta in thetas:
                 for gamma in gammas:
+
+
                     np.random.seed(1)
-                    #game = DiceGame(dice=3, sides=6, bias=[0.1, 0.1, 0.1, 0.5, 0.1, 0.1], penalty = val)
+                    #game = DiceGame(dice=2, sides=3, penalty = val)
+                    game = DiceGame(dice=2, sides=4)
                     #game =  DiceGame(dice=2, sides=3, values=[1, 2, 6], bias=[0.5, 0.1, 0.4], penalty=2)
-                    game = DiceGame(dice=6)
                     agent2 = MyAgent(game, theta, gamma)
                     init_time = agent2.time
                     init_loops = agent2.loops
@@ -142,8 +150,9 @@ def main():
                     title  = "Value iter Game_results (2 dice)" + str(theta) + " - " + str(gamma) + " - " + str(val)
                     file = title + ".png"
                     plt.title(title)
-                    plt.savefig(file)
+                    #plt.savefig(file)
                     plt.clf()
                     results = []
+                    print()
 if __name__ == "__main__":
     main()
