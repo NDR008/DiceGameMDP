@@ -37,30 +37,26 @@ class MyAgent(DiceGameAgent):
         self.gamma = gamma
         self.theta = theta
 
-        poss_act = self.game.actions
-        print(poss_act)
-        #choices = len(poss_act)
         poss_states = self.game.states
         self.vals0 = {}
-        #for each_state in poss_states:
-            #self.vals0[(each_state)] = [0, poss_act[np.random.randint(choices)]]
-            #self.vals0[(each_state)] = ([0, poss_act[-1]])
+        for each_state in poss_states:
+            self.vals0[(each_state)] = [0, None]
 
+        poss_act = self.game.actions
         run_next_states = {}
         for each_state in poss_states:
-            self.vals0[each_state] = [0, poss_act[-1]]
             for act in poss_act:
                 run_next_states[(act, each_state)] = self.game.get_next_states(act, each_state)
-        print(poss_states)
+
         pre_load = time.process_time() - start_time
         i = 0
         while 1:
             i += 1
-            convergence = 1  # hopefully
+            delta = 0
             for each_state in poss_states:
-                old_act = self.vals0[each_state][1]
-                max_val = self.vals0[each_state][0] 
-                max_act = old_act # in case no new value exceed the old
+                temp = self.vals0[each_state][0]
+                max_val = 0
+                max_act = 0
                 for act in poss_act:
                     new_val = 0
                     (state_dashes, flag, reward, probability)  = run_next_states[(act, each_state)]
@@ -74,17 +70,16 @@ class MyAgent(DiceGameAgent):
                         max_val = new_val
                         max_act = act        # this is the hybrid stage of argmax
                 self.vals0[each_state] = [max_val, max_act]
-                if self.vals0[each_state][1] != old_act:
-                    convergence = 0  # need to try again
+                delta = max(delta, abs(temp - self.vals0[each_state][0]))
             delta_time = time.process_time() - start_time
-            response_time = (delta_time-pre_load) / i
+            response_time = (delta_time - pre_load) / i
             next_loop_time = response_time + delta_time
-            if convergence:
+            if delta < self.theta:
                 break
-        if debug: print("Policy based init time",pre_load, time.process_time()-start_time-pre_load, i)
+        if debug: print("Value based init time",pre_load, time.process_time()-start_time-pre_load, i)
         self.time = time.process_time() - start_time
         self.loops = i
-        print(self.vals0)
+        
 
     def play(self, state):
         # maybe if we are in the winning state, we can skip evaluating
@@ -120,36 +115,37 @@ def main():
     # change the number to see different results
     #  or delete the line to make it change each time it is run
 
-    #a=[10,100,10000]
-    a=[1000]
-    thetas = [0.001]
-    #thetas = [0.1]
-    b = []
-    for cycle in a:
-        for theta in thetas:
-            for gamma in [1]:
+    n = [1000000]
+    thetas = [100, 1, 0.01, 0.0001, 0.000001]
+    gammas = [1]
+    penalties = [1]
+    dice = [3, 5]
+    sides = [4, 6, 8]
+    for cycle in n:
+        for val in penalties:
+            for gamma in gammas:
+                for d in dice:
+                    for s in sides:
+                        for theta in thetas:
+                            results = []
+                            np.random.seed(1)
+                            #game = DiceGame(dice=3, sides=6, bias=[0.1, 0.1, 0.1, 0.5, 0.1, 0.1], penalty = val)
+                            #game =  DiceGame(dice=2, sides=3, values=[1, 2, 6], bias=[0.5, 0.1, 0.4], penalty=2)
+                            game = DiceGame(dice=d, sides=s)
+                            agent2 = MyAgent(game, theta, gamma)
+                            init_time = agent2.time
+                            init_loops = agent2.loops
 
-                np.random.seed(1)
-                
-                #game = DiceGame(dice=3, bias = [0.3, 0.05, 0.05, 0.05, 0.05, 0.3, 0.05, 0.05 ,0.05, 0.05], sides=10, penalty=0)
-                #game =  DiceGame(dice=2, sides=3, values=[1, 2, 6], bias=[0.5, 0.1, 0.4], penalty=2)
-                #game = DiceGame(sides=4, dice=2, values=[-50, -25, -2, 5], bias = [0.1, 0.1, 0.1, 0.7])
-                game = DiceGame(sides=4, dice=2, values=[-50, -25, -5, -2], bias = [0.1, 0.1, 0.1, 0.7], penalty=0)
-                #game = DiceGame()
-                agent2 = MyAgent(game, theta, gamma)
+                            for i in range(cycle):
+                                results.append(play_game_with_agent(agent2, game, verbose=False))
+                            print("time:", init_time, "\t", "dice:", d, "\t", "sides:", s, "\t", "loop:", init_loops, "\t", "cycle:",cycle,  "\t", "theta:", theta, "\t", "gamma:", gamma,  "\t", "penalty:", val, "\t", "min:", min(results),  "\t", "max:", max(results), "\t", "average", np.average(results))
+                            import matplotlib.pyplot as plt
+                            plt.hist(results, bins = range(-20,30))
+                            title  = "Value iteration " "- Dice_"+ str(d) + "- Sides"+str(s) + "- Gamma_"+str(gamma) + "- Theta"+ str(theta) + "- Reward_"+ str(val) + "- Cycles_"+ str(cycle)
+                            file = title + ".png"
+                            plt.title(title)
+                            plt.savefig(file)
+                            plt.clf()
 
-                for i in range(cycle):
-                    # agent1 = AlwaysHold(game)
-                    # play_game_with_agent(agent1, game, verbose=True)
-                    b.append(play_game_with_agent(agent2, game, verbose=False))
-                print(theta, "\t", gamma,  "\t", cycle,  "\t", min(b),  "\t", max(b),  "\t", np.average(b))
-                import matplotlib.pyplot as plt
-                plt.hist(b, bins = range(-20,20))
-                title  = "Value-iter: Game_results " + str(theta) + " - " + str(gamma)
-                file = title + ".png"
-                plt.title(title)
-                plt.savefig(file)
-                plt.clf()
-                b = []
 if __name__ == "__main__":
     main()

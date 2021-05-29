@@ -37,53 +37,48 @@ class MyAgent(DiceGameAgent):
         self.gamma = gamma
         self.theta = theta
 
-        poss_act = self.game.actions
-        #choices = len(poss_act)
         poss_states = self.game.states
+        poss_act = self.game.actions
         self.vals0 = {}
-        for each_state in poss_states:
-            #self.vals0[(each_state)] = [0, poss_act[np.random.randint(choices)]]
-            self.vals0[(each_state)] = ([0, poss_act[-1]])
-        
         run_next_states = {}
+
         for each_state in poss_states:
+            self.vals0[(each_state)] = [0, None]
             for act in poss_act:
                 run_next_states[(act, each_state)] = self.game.get_next_states(act, each_state)
 
+        z = {}
         pre_load = time.process_time() - start_time
         i = 0
-        for extra in range(1):  # just for the rare possibility that the values lack of convergence will cause an issue
-            while 1:
-                i += 1
-                convergence = 1  # hopefully
-                for each_state in poss_states:
-                    old_act = self.vals0[each_state][1]
-                    max_val = 0
-                    max_act = 0
-                    for act in poss_act:
-                        new_val = 0
-                        (state_dashes, flag, reward, probability)  = run_next_states[(act, each_state)]
-                        for prob_pos, each_probability in enumerate(probability):
-                            if not flag:
-                                state_dash = state_dashes[prob_pos]
-                                new_val += each_probability * (reward + self.gamma * self.vals0[state_dash][0])
-                            else:
-                                new_val += each_probability * (reward)
-                        if new_val > max_val:
-                            max_val = new_val
-                            max_act = act        # this is the hybrid stage of argmax
-                    self.vals0[each_state] = [max_val, max_act]
-                    if self.vals0[each_state][1] != old_act:
-                        convergence = 0  # need to try again
-                delta_time = time.process_time() - start_time
-                response_time = (delta_time-pre_load) / i
-                next_loop_time = response_time + delta_time
-                if convergence or next_loop_time > 30:
-                    break
-            if debug: print("Policy based init time",pre_load, time.process_time()-start_time-pre_load, i)
-            self.time = time.process_time() - start_time
-            self.loops = i
+        while 1:
+            i += 1
+            delta = 0
+            for each_state in poss_states:
+                temp = self.vals0[each_state][0]
+                max_val = 0
+                for act in poss_act:
+                    new_val = 0
+                    max_act = act
+                    (state_dashes, flag, reward, probability)  = run_next_states[(act, each_state)]
+                    for prob_pos, each_probability in enumerate(probability):
+                        if not flag:
+                            state_dash = state_dashes[prob_pos]
+                            new_val += each_probability * (reward + self.gamma * self.vals0[state_dash][0])
+                        else:
+                            new_val += each_probability * (reward)  # because the this terminating state is just the value we init'ed
+                    if new_val > max_val:
+                        max_val = new_val
+                        max_act = act        # this is the hybrid stage of argmax
+                self.vals0[each_state] = [max_val, max_act]
+                delta = max(delta, abs(temp - self.vals0[each_state][0]))
+            if delta < self.theta:
+                break
+        if debug: print("Value based init time",pre_load, time.process_time()-start_time-pre_load, i)
+        print(z)
+        self.time = time.process_time() - start_time
+        self.loops = i
         
+
     def play(self, state):
         # maybe if we are in the winning state, we can skip evaluating
         return self.vals0[state][1]
@@ -118,7 +113,7 @@ def main():
     # change the number to see different results
     #  or delete the line to make it change each time it is run
 
-    n = [100000]
+    n = [1000]
     thetas = [0.001]
     gammas = [1]
     results = []
@@ -127,12 +122,10 @@ def main():
         for val in penalties:
             for theta in thetas:
                 for gamma in gammas:
-
-
                     np.random.seed(1)
                     #game = DiceGame(dice=3, sides=6, bias=[0.1, 0.1, 0.1, 0.5, 0.1, 0.1], penalty = val)
                     #game =  DiceGame(dice=2, sides=3, values=[1, 2, 6], bias=[0.5, 0.1, 0.4], penalty=2)
-                    game = DiceGame(dice=6)
+                    game = DiceGame()
                     agent2 = MyAgent(game, theta, gamma)
                     init_time = agent2.time
                     init_loops = agent2.loops
@@ -148,5 +141,6 @@ def main():
                     plt.savefig(file)
                     plt.clf()
                     results = []
+
 if __name__ == "__main__":
     main()

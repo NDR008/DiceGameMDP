@@ -73,11 +73,10 @@ class MyAgent(DiceGameAgent):
                         max_val = new_val
                         max_act = act        # this is the hybrid stage of argmax
                     print("for state:", each_state, "with act:", max_act, "max value is:", max_val)
-                    print()
                 self.vals0[each_state] = [max_val, max_act]
-                print("for now, best actions is ", max_act, "to get a hopeful value of", max_val)
+                print("for now, best in", each_state, "actions is ", max_act, "to get a hopeful value of", max_val)
                 print()
-                print()
+
                 delta = max(delta, abs(temp - self.vals0[each_state][0]))
             delta_time = time.process_time() - start_time
             response_time = (delta_time - pre_load) / i
@@ -136,7 +135,7 @@ def main():
 
                     np.random.seed(1)
                     #game = DiceGame(dice=2, sides=3, penalty = val)
-                    game = DiceGame(dice=2, sides=4)
+                    game = DiceGame(dice=3, sides=2)
                     #game =  DiceGame(dice=2, sides=3, values=[1, 2, 6], bias=[0.5, 0.1, 0.4], penalty=2)
                     agent2 = MyAgent(game, theta, gamma)
                     init_time = agent2.time

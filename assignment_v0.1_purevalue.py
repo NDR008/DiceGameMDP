@@ -29,7 +29,7 @@ class PerfectionistAgent(DiceGameAgent):
 
 class MyAgent(DiceGameAgent):
     def __init__(self, game, theta = 0.01, gamma = 0.9):
-        debug = False
+        debug = True
 
         import time
         start_time = time.process_time()
@@ -37,15 +37,15 @@ class MyAgent(DiceGameAgent):
         self.gamma = gamma
         self.theta = theta
 
+        poss_act = self.game.actions
         poss_states = self.game.states
         self.vals0 = {}
         for each_state in poss_states:
-            self.vals0[(each_state)] = [0, None]
+            self.vals0[(each_state)] = [0, poss_act[-1]]
 
-        poss_act = self.game.actions
+
         
         run_next_states = {}
-        min_reward = 0
         for each_state in poss_states:
             for act in poss_act:
                 run_next_states[(act, each_state)] = self.game.get_next_states(act, each_state)
@@ -56,9 +56,9 @@ class MyAgent(DiceGameAgent):
             i += 1
             delta = 0
             for each_state in poss_states:
-                temp = self.vals0[each_state][0]
-                max_val = 0
-                max_act = 0
+                old_val = self.vals0[each_state][0]
+                max_act = self.vals0[each_state][1]
+                max_val = old_val
                 for act in poss_act:
                     new_val = 0
                     (state_dashes, flag, reward, probability)  = run_next_states[(act, each_state)]
@@ -72,15 +72,12 @@ class MyAgent(DiceGameAgent):
                         max_val = new_val
                         max_act = act        # this is the hybrid stage of argmax
                 self.vals0[each_state] = [max_val, max_act]
-                delta = max(delta, abs(temp - self.vals0[each_state][0]))
-            delta_time = time.process_time() - start_time
-            response_time = (delta_time - pre_load) / i
-            next_loop_time = response_time + delta_time
-            if delta < self.theta or next_loop_time > 30:
+                delta = max(delta, abs(old_val - self.vals0[each_state][0]))
+            if delta < self.theta:
                 break
-        if debug: print("Value based init time",pre_load, time.process_time()-start_time-pre_load, i)
-        self.time = time.process_time() - start_time
-        self.loops = i
+        if debug: print("Policy based init time",pre_load, time.process_time()-start_time-pre_load, i)
+        print(self.vals0)
+
         
 
     def play(self, state):
@@ -117,33 +114,37 @@ def main():
     # change the number to see different results
     #  or delete the line to make it change each time it is run
 
-    n = [100000]
+    #a=[10,100,10000]
+    a=[10000]
     thetas = [0.001]
-    gammas = [1]
-    results = []
-    penalties = [0.5,0,1]
-    for cycle in n:
-        for val in penalties:
-            for theta in thetas:
-                for gamma in gammas:
-                    np.random.seed(1)
-                    #game = DiceGame(dice=3, sides=6, bias=[0.1, 0.1, 0.1, 0.5, 0.1, 0.1], penalty = val)
-                    #game =  DiceGame(dice=2, sides=3, values=[1, 2, 6], bias=[0.5, 0.1, 0.4], penalty=2)
-                    game = DiceGame(dice=6)
-                    agent2 = MyAgent(game, theta, gamma)
-                    init_time = agent2.time
-                    init_loops = agent2.loops
+    #thetas = [0.1]
+    b = []
+    for cycle in a:
+        for theta in thetas:
+            for gamma in [1]:
 
-                    for i in range(cycle):
-                        results.append(play_game_with_agent(agent2, game, verbose=False))
-                    print("time:", init_time,  "\t", "loop:", init_loops, "cycle:",cycle,  "\t", "theta:", theta, "\t", "gamma:", gamma,  "\t", "penalty:", val, "\t", "min:", min(results),  "\t", "max:", max(results), "\t", "average", np.average(results))
-                    import matplotlib.pyplot as plt
-                    plt.hist(results, bins = range(-20,30))
-                    title  = "Value iter Game_results (2 dice)" + str(theta) + " - " + str(gamma) + " - " + str(val)
-                    file = title + ".png"
-                    plt.title(title)
-                    plt.savefig(file)
-                    plt.clf()
-                    results = []
+                np.random.seed(1)
+                
+                #game = DiceGame(dice=3, bias = [0.3, 0.05, 0.05, 0.05, 0.05, 0.3, 0.05, 0.05 ,0.05, 0.05], sides=10, penalty=0)
+                #game =  DiceGame(dice=2, sides=3, values=[1, 2, 6], bias=[0.5, 0.1, 0.4], penalty=2)
+                #game = DiceGame(sides=4, dice=2, values=[-50, -25, -2, 5], bias = [0.1, 0.1, 0.1, 0.7])
+                #game = DiceGame(sides=4, dice=2, values=[-50, -25, -2, 5], bias = [0.1, 0.1, 0.1, 0.7], penalty=0)
+                #game = DiceGame()
+                game = DiceGame(sides=4, dice=2, values=[-50, -25, -5, -2], bias = [0.1, 0.1, 0.1, 0.7], penalty=0)
+                agent2 = MyAgent(game, theta, gamma)
+
+                for i in range(cycle):
+                    # agent1 = AlwaysHold(game)
+                    # play_game_with_agent(agent1, game, verbose=True)
+                    b.append(play_game_with_agent(agent2, game, verbose=False))
+                print(theta, "\t", gamma,  "\t", cycle,  "\t", min(b),  "\t", max(b),  "\t", np.average(b))
+                import matplotlib.pyplot as plt
+                plt.hist(b, bins = range(-20,20))
+                title  = "Value-iter: Game_results " + str(theta) + " - " + str(gamma)
+                file = title + ".png"
+                plt.title(title)
+                plt.savefig(file)
+                plt.clf()
+                b = []
 if __name__ == "__main__":
     main()
