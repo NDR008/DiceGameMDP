@@ -75,7 +75,8 @@ Looking at the histogram from a equally seeded 1 million rounds comparison of va
 ![Theta Indifference](data/Value_versus_policy0-1.0-1000000.png)  
 (Narrow/Orange is the policy-iteration, Wide/Blue is the value iteration)
 
-However, just as for the average scores, the value iteration method and policy iterations do not only produce the same results for the other games, they also produce what seems to be near identical histograms as shown here:
+However, just as for the average scores, the value iteration method and policy iterations do not only produce the same results for the other games, they also produce what seems to be near identical histograms as shown here:  
+
 ![Theta Indifference](data/Value_versus_policy1-1.0-1000000.png)  
 (Narrow/Orange is the policy-iteration, Wide/Blue is the value iteration)
 
