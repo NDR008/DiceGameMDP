@@ -185,28 +185,22 @@ def main():
                         np.random.seed(1)
                         #game = DiceGame()
                         #game = DiceGame(sides=4, dice=2, values=[-50, -25, -5, -2], bias = [0.1, 0.1, 0.1, 0.7], penalty=0)
-                        agent2 = MyAgent(game, theta, gamma)
+                        agent1 = MyAgent(game, theta, gamma)
 
                         for i in range(cycle):
-                            result.append(play_game_with_agent(agent2, game, verbose=False))
-                        print(game_id, "\t",gamma,  "\t", theta, "\t", cycle,  "\t", min(result),  "\t", max(result),  "\t", np.average(result), "\t", agent2.time, "\t", agent2.loops, "\t", skew(result))                        
-                        import matplotlib.pyplot as plt
-                        plt.grid(axis='y', alpha=0.75)
-                        plt.hist(result, bins=(max(result)-min(result)), alpha=0.7, rwidth=0.85, label="value")
-                        result=[]
+                            result.append(play_game_with_agent(agent1, game, verbose=False))
+                        
+
                         np.random.seed(1)
                         agent2 = MyAgent2(game, gamma)
 
                         for i in range(cycle):
                             result.append(play_game_with_agent(agent2, game, verbose=False))
-                        print(game_id, "\t",gamma,  "\t", theta, "\t", cycle,  "\t", min(result),  "\t", max(result),  "\t", np.average(result), "\t", agent2.time, "\t", agent2.loops, "\t", skew(result))                        
-                        plt.grid(axis='y', alpha=0.75)
-                        plt.hist(result, bins=(max(result)-min(result)), alpha=0.7, rwidth=0.60, label="policy")
-                        title  = "Value_versus_policy" + str(game_id) + "-" + str(gamma) + "-" + str(cycle)
-                        file = "images/" + title + ".png"
-                        plt.title(title)
-                        plt.savefig(file)
-                        plt.clf()    
+                        
+      
+                        for state in game.states:
+                            if agent1.policy[state][1] != agent2.policy[state][1]:
+                                print(state, agent1.policy[state], agent2.policy[state])
     
 if __name__ == "__main__":
     main()
