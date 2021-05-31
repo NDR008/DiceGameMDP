@@ -71,7 +71,10 @@ Choosing a lower theta (which gives a better chance at convergence) results in a
 ## 2.3 Histogram Comparison
 The final check is more of a sanity check rather than an object validation. That is to look at the histogram of values. A superior agent should have a higher average score that of a random agent, with a distribution skewed to the right (in case of a tail, the tail ought to be on the lower score side).
 
-Looking at the histogram from a equally seeded 1 million rounds comparison of value and policy iteration, it is noticable that for game0, there is a detectable difference as shown in the following graph.  The value iteration has a slightly superio skew value of -1.325, whereas the policy iteration has a skew value of -1.336. However, what is interesting is that the score 13, 14 (the mode value) and 15 are more frequent with policy based iteration, while only the value 16 and 17 are slighly less frequent. 
+Looking at the histogram from a equally seeded game0 run over 100 game rounds there is a significant different visible on the historgram. clearly proving that these policies are not identical.  
+![Theta Indifference](data/Value_versus_policy0-1.0-100.png)  
+
+For the same game run for 1 million rounds comparison of value and policy iteration, the difference is less pronounced but noticable for the same game0, there is a detectable difference as shown in the following graph.  The value iteration has a slightly superio skew value of -1.325, whereas the policy iteration has a skew value of -1.336. However, what is interesting is that the score 13, 14 (the mode value) and 15 are more frequent with policy based iteration, while only the value 16 and 17 are slighly less frequent. 
 ![Theta Indifference](data/Value_versus_policy0-1.0-1000000.png)  
 (Narrow/Orange is the policy-iteration, Wide/Blue is the value iteration)
 
@@ -80,7 +83,6 @@ However, just as for the average scores, the value iteration method and policy i
 ![Theta Indifference](data/Value_versus_policy1-1.0-1000000.png)  
 (Narrow/Orange is the policy-iteration, Wide/Blue is the value iteration)
 
-This difference could not be explained or investigated further.
 
 # 3. Optimisation Methods  
 ## 3.1 Common Optimisations for both policy and value iteration
