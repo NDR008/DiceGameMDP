@@ -1,16 +1,20 @@
 # Summary  
 
-The activity scope was to develop an AI agent for a given dice game for which the game parameters can be varied (number of dice, dice sides, side values, bias, and penalty for re-rolling). Since the permutation of dice states are fixed for a given game. This sort of game can be modelled as a Markov decision process since there actions need only be decided on the current state and not how that state was achieved. This type of game has a finite set of states, actions and rewards and a suitable problem to solve by Markov Decision Process (MDP) (Sutton and Barto, 2018). This game does not have a terminating state, but rather a terminating action. The terminating action (holding all dice) has a 100% certainty of terminating whereas all non-terminating actions have a 100% certainty of attaining a penalty.  
+The activity scope was to develop an AI agent for a given dice game for which the game parameters can be varied (number of dice, dice sides, side values, bias, and penalty for re-rolling). Since the permutation of dice states are fixed for a given game. This sort of game could be modelled as a Markov decision process since the choice of actions need only be decided based on the current state and not how that state was achieved. There are two common ways of solving this problem - value iteration and policy iteration. Since it was known that this agent would be tested with different game parameters, an agent that converged in fewer iterations was selected - and that is the policy iteration method (Norving and Russel, 2010; Sutton and Barto, 2018; Abbeel, 2012).  While it was proven to be the case that policy iteration can converge sooner, it was also found that under some conditions value-iterations produced values with a higher skew and a higher average score. This phenomena could not be explained but was discussed in the included report. Nevertheless the policy iteration method was retained due its scalability to complex game setups.  
+
+# 1. Introduction
+
+This type of game has a finite set of states, actions and rewards and a suitable problem to solve by Markov Decision Process (MDP) (Sutton and Barto, 2018). This game does not have a terminating state, but rather a terminating action. The terminating action (holding all dice) has a 100% certainty of terminating whereas all non-terminating actions have a 100% certainty of attaining a penalty.  
   
 In view of the Bellman equation, the agent can choose to terminate the game when the value of rolling again is unlikely to achieve a higher value state. For the termination action, there are obviously no future states (equivalent to a gamma of 0). In strategic terms, that means that a discount value of 1 leads to an infinite farsightedness and a discount value of 0 leads to short-sightedness (Wallscheid, 2020). This decision assumed a neutral or negative reward. If the game were tested with a positive reward for the non-terminating action, then the agent would choose to re-roll forever (it is a 100% certainty of achieving a reward for that action) which is likely what a human player would want to do (so long as time permits it). Since it is known that this agent will be tested through some automated testing methods, an intentional default policy to terminate has been programmed (which is actually the least optimal solution).  
 
 In literature there are two popular methods proposed for converging towards a solution for the Bellman equation, that is the value-iteration method and the policy iteration method (Norving and Russel, 2010; Sutton and Barto, 2018; Abbeel, 2012). Value iteration requires an additional parameter to determine at which residual error to stop iteration (hereafter referred to as theta). Theta effectively limits the number of iterations. However, the number of iterations necessary to reach an optimal policy will differ by the complexity of the game (number of dice, dice-values, actions, bias and reward). This would mean that a theta value appropriate for different game permutations or a way of equating a theta value to the game parameters (or selecting an excessively low value of theta to have a better chance at a reliable setting). To avoid this issue, a policy iteration was opted. It is known that a policy iteration will converge in fewer iterations (Norving and Russel, 2010). The actual implementation is slightly different from the literature for the sake of optimisation towards execution speed (Norving and Russel, 2010; Sutton and Barto, 2018).
 
-# Validation of Design Choices for the Agent
+# 2. Design Choices and Validation
 Several considerations and tests to validate the final choice of agent was made. The agent was tested against several game scenarios described in the appendix. For comparison reasons a random agent was also included for comparisons in some of the following data.  
 All tests are conducted with the same seed value of 1.
 
-## Validation of Gamma=1
+## 2.1 Validation of Gamma=1
 
 As can be seen even when testing 2 different games (for definition refer to appendix) results are near identical (game 2):  
 ![Gamma0 validation](data/game0-1E-5-comparison.png)  
@@ -22,7 +26,7 @@ The result also holds true for less attractive or reasonable games (game 3 on th
 ![Gamma3&4 validation](data/game3-4_comparison_1M.png)  
 
 
-## Policy Iteration over Value Iteration
+## 2.2 Policy Iteration over Value Iteration
 However, looking closely at the values for theta = 1E-5 and gamma=1
 Game0 - Reviewing the results demonstrated that policy iteration produced a different result For 100 and 10,000 game rounds. This unexpected since, the policy iteration method converged after 5 iterations, and thus it was expected that the value iteration would only produce unecessary furhter iterations. However the different average value implies that some down-stream iteration produced a difference in policy that favours the value iteration agent. However at 1 million game rounds, the policy agent performed better. 
 Since the policy iteration based agent performed better at larger samples, it was judged to be sufficiently optimal. 
@@ -36,7 +40,7 @@ Table 1: Game 0 (Both at Gamma = 1 and for value iteration Theta = 1E-5)
 | Delta  | -0.04 | -0.0013 | 0.000815 |
 
 This result is extremely interesting and suggests that:  
-a) either the policy iteration was less optimal than the value iteration since for the same game seeds, it produced a differen result, and it is known that the value iteration had more iteration loops. Thus implying that in a later value iteration, the value changed such that the policy differed.  
+a) either the policy iteration was less optimal than the value iteration since for the same game seed, the agents produced a different result, and it is known that the value iteration had more iteration loops. Thus implying that in a later value iteration, the value changed such that the policy differed.  
 or b) that the choice of initialised policy / value tables and their influence way that algorithm picked the best action when more than one action would lead to the same value from a given state.
 
 This different of the algorithms was no longer detectable on more complex games such as that of game1 and game2 as shown in the following tables.
@@ -61,24 +65,29 @@ Table 3: Game 2 (Both at Gamma = 1 and for value iteration Theta = 1E-5)
 These results suggested that policy-iteration is a valid choice. Even though some doubts existed on its relative optimisation exists - however the fact that the agent does not require a theta parameter optimisation makes it nevertheless the preferred solution in order to keep the lowest policy construction time possible.
 
 ![Theta Indifference](data/policy_vs_value_w_diff_theta.png)  
-The graph shows that for even for game 0, a theta value of 1 would lead to fewer iterations than policy iteration (suggesting that the values had not yet converged enought to achieve a converged policy).
+The graph shows that for even for game 0, a theta value of 1 would lead to fewer iterations than policy iteration (suggesting that the values had not yet converged enough to achieve a converged policy).
 Choosing a lower theta (which gives a better chance at convergence) results in a higher iteration loop count for all games tested.
 
-## Histogram Comparison
+## 2.3 Histogram Comparison
 The final check is more of a sanity check rather than an object validation. That is to look at the histogram of values. A superior agent should have a higher average score that of a random agent, with a distribution skewed to the right (in case of a tail, the tail ought to be on the lower score side).
 
 Looking at the histogram from a equally seeded 1 million rounds comparison of value and policy iteration, it is noticable that for game0, there is a detectable difference as shown in the following graph.  The value iteration has a slightly superio skew value of -1.325, whereas the policy iteration has a skew value of -1.336. However, what is interesting is that the score 13, 14 (the mode value) and 15 are more frequent with policy based iteration, while only the value 16 and 17 are slighly less frequent. 
 ![Theta Indifference](data/Value_versus_policy0-1.0-1000000.png)  
-(Narrow/Orange is the policy-iteration, Wide/Bluw is the value iteration)
+(Narrow/Orange is the policy-iteration, Wide/Blue is the value iteration)
 
-However, just as for the average scores, the value iteration method and policy iterations do not only produce the same results for the other games, they also produce what seems to be near identical histograms.
+However, just as for the average scores, the value iteration method and policy iterations do not only produce the same results for the other games, they also produce what seems to be near identical histograms as shown here:  
 
-# Optimisation Methods  
-## Common Optimisations for both policy and value iteration
-### Tracking the max value and action
+![Theta Indifference](data/Value_versus_policy1-1.0-1000000.png)  
+(Narrow/Orange is the policy-iteration, Wide/Blue is the value iteration)
+
+This difference could not be explained or investigated further.
+
+# 3. Optimisation Methods  
+## 3.1 Common Optimisations for both policy and value iteration
+### 3.1.1 Tracking the max value and action
 Each iteration tracks the action that has the best value for a given state (to avoid storing the actions and value tables, and searching through them at the ends).
 
-### Pre-building the in memory the visibility of the game
+### 3.1.2 Pre-building the in memory the visibility of the game
 Executing the following command is slow, and its results will not change during the game since this is an MDP.
 ```
 self.game.get_next_states(action, state)
@@ -91,8 +100,16 @@ Therefore it was pre-loaded into a dictionary with the following simple for-loop
             derived_states[(action, each_state)] = self.game.get_next_states(action, each_state)
 ```
 
-## Policy iteration
+## 3.2 Policy iteration
 All values are iterated if the policy of any state has not converged (to avoid an additional if-statement for each iteration for each state for action pair).
+
+
+# Reference List
+- Abbeel, P., 2012. Markov Decision Processes and Exact Solution Methods: Value Iteration Policy Iteration Linear Programming [Online]. Available from: https://people.eecs.berkeley.edu/~pabbeel/cs287-fa12/slides/mdps-exact-methods.pdf [Accessed 28 May 2021].
+- Norving, P. and Russel, S., 2010. Artificial Intelligence A Modern Approach. Third.
+- Sutton, R.S. and Barto, A.G., 2018. Reinforcement Learning: An Introduction Adaptive Computation and Machine Learning. Second.
+- Wallscheid, O., 2020. Lecture 01: Introduction to Reinforcement Learning - YouTube [Online]. Available from: https://www.youtube.com/watch?v=9LLzaIJuu-E&t=2188s [Accessed 31 May 2021].
+
 
 
 # Appendix
