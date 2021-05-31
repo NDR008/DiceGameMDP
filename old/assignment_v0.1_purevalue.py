@@ -28,61 +28,56 @@ class PerfectionistAgent(DiceGameAgent):
 ###############################################################
 
 class MyAgent(DiceGameAgent):
-    def __init__(self, game, theta = 0.01, gamma = 0.9):
-        debug = True
-
-        import time
-        start_time = time.process_time()
+    def __init__(self, game, theta = 0.01, gamma = 0.9):  # to remove
+    # def __init__(self, game):        
         super().__init__(game)
         self.gamma = gamma
-        self.theta = theta
+        #self.theta = theta
+        
+        debug = True  # to remove
+        import time  # to remove
+        start_time = time.process_time()  # to remove
 
         poss_act = self.game.actions
         poss_states = self.game.states
-        self.vals0 = {}
-        for each_state in poss_states:
-            self.vals0[(each_state)] = [0, poss_act[-1]]
 
-
-        
-        run_next_states = {}
+        derived_states = {}
         for each_state in poss_states:
+            self.policy[(each_state)] = [0, poss_act[-1]]
             for act in poss_act:
-                run_next_states[(act, each_state)] = self.game.get_next_states(act, each_state)
-
-        pre_load = time.process_time() - start_time
+                derived_states[(act, each_state)] = self.game.get_next_states(act, each_state)
         i = 0
         while 1:
             i += 1
             delta = 0
             for each_state in poss_states:
-                old_val = self.vals0[each_state][0]
-                max_act = self.vals0[each_state][1]
+                old_val = self.policy[each_state][0]
+                max_act = self.policy[each_state][1]
                 max_val = old_val
                 for act in poss_act:
                     new_val = 0
-                    (state_dashes, flag, reward, probability)  = run_next_states[(act, each_state)]
+                    (state_dashes, flag, reward, probability)  = derived_states[(act, each_state)]
                     for prob_pos, each_probability in enumerate(probability):
                         if not flag:
                             state_dash = state_dashes[prob_pos]
-                            new_val += each_probability * (reward + self.gamma * self.vals0[state_dash][0])
+                            new_val += each_probability * (reward + self.gamma * self.policy[state_dash][0])
                         else:
                             new_val += each_probability * (reward)
                     if new_val > max_val:
                         max_val = new_val
                         max_act = act        # this is the hybrid stage of argmax
-                self.vals0[each_state] = [max_val, max_act]
-                delta = max(delta, abs(old_val - self.vals0[each_state][0]))
+                self.policy[each_state] = [max_val, max_act]
+                delta = max(delta, abs(old_val - self.policy[each_state][0]))
             if delta < self.theta:
                 break
         if debug: print("Policy based init time",pre_load, time.process_time()-start_time-pre_load, i)
-        print(self.vals0)
+        print(self.policy)
 
         
 
     def play(self, state):
         # maybe if we are in the winning state, we can skip evaluating
-        return self.vals0[state][1]
+        return self.policy[state][1]
     
 ###############################################################
         
