@@ -1,8 +1,8 @@
 # Summary  
 
-The activity scope was to develop an AI agent for a given dice game for which the game parameters can be varied (number of dice, dice sides, side values, bias, and penalty for re-rolling). The permutation of the dice states are fixed for a given game. This sort of game could be modelled as a Markov decision process since the choice of actions need only be decided based on the current state and not how that state was achieved. There are two common ways of solving this problem - value iteration and policy iteration. Since it was known that this agent would be tested with different game parameters, an agent that converged in fewer iterations was selected - and that is the policy iteration method (Norving and Russel, 2010; Sutton and Barto, 2018; Abbeel, 2012).  While it was proven to be the case that policy iteration can converge sooner, it was also found that under some conditions (games with relatively low states - such as the default 3 dice game) value-iterations produced a higher average score. This phenomena could not be definitely resolved, but is likely due to the conscious decision of selecting gamma=1 for a game that such a value might not be appropriate. This is since, gamma=1 is not appropriate for a game that can have an infinite iteration (or an inifinite-time-horizon) due to the lack of terminating states. The reason this can be allowed is due to the fact that the certainty (probability of 1.0) of holding (which is a terminating action) will beat the odds-reward potential (and thus also the value) of rolling again. Since policy iteration causes fewer iterations than that of value iteration this has a similar effect to reducing the far-sightedness of the agent.  
+The activity scope was to develop an AI agent for a given dice game for which the game parameters can be varied (number of dice, dice sides, side values, bias, and penalty for re-rolling). The permutation of the dice states are fixed for a given game. This sort of game could be modelled as a Markov decision process since the choice of actions need only be decided based on the current state and not how that state was achieved. There are two common ways of solving this problem - value iteration and policy iteration. Since it was known that this agent would be tested with different game parameters, an agent that converged in fewer iterations was selected - and that is the policy iteration method (Norving and Russel, 2010; Sutton and Barto, 2018; Abbeel, 2012).  While it was proven to be the case that policy iteration can converge sooner, it was also found that under some conditions (games with relatively low states - such as the default 3 dice game) value-iterations produced a higher average score. This phenomenon could not be definitely resolved, but is likely due to the conscious decision of selecting gamma=1 for a game that such a value might not be appropriate. This is since, gamma=1 is not appropriate for a game that can have an infinite iteration (or an inifinite-time-horizon) due to the lack of terminating states. This was allowed since certainty (probability of 1.0) of holding (which is a terminating action) will beat the odds-reward potential (and thus also the value) of rolling again and thus terminating by the terminating action. Since policy iteration causes fewer iterations than that of value iteration this has a similar effect to reducing the far-sightedness of the agent.  
 
-The proposed agent was deemed sufficient because it can produce comparable or equal results over a large number of runs. This is while being able to tackle more complex game settings without having to pre-determine an appropriate theta setting.
+The proposed agent was deemed sufficient because it can produce comparable or equal results over a large quantity (1 million) of game rounds. This is still while being able to tackle more complex game settings without having to pre-determine an appropriate theta setting.
 
 
 # 1. Introduction
@@ -15,7 +15,7 @@ In literature there are two popular methods proposed for converging towards a so
 
 # 2. Design Choices and Justification
 Several considerations and tests to validate the final choice of agent was made. The agent was tested against several game scenarios described in the appendix. For comparison reasons a random agent was also included for comparisons in some of the following data.  
-All tests are conducted with the same seed value of 1.
+All tests are conducted with the same seed value of at the start of game configuration listed in the appendix.
 
 ## 2.1 Validation of Gamma=1
 
@@ -62,8 +62,8 @@ Table 3: Game 2 (Both at Gamma = 1 and for value iteration Theta = 1E-5)
 
 These results suggested that policy-iteration is a reasonable choice to ensure scalability without a pre-set parameter theta (which influence construction time on different cases). However in actual fact, it could be that policy-iteration is not the perfect method, since they produce different policies which produce detectable differences on the default game, but not on more complex ones.
 
-Considering that this game does not have terminating states, then this game could have an infinite-time-horizon (or an infinite iteration utility). It is not meant to be allowed to set gamma to 1 for problems that have an infinite-time-horizon. The decision to ignore this, is based on the fact that this game does have a terminating action that should become more advantegous than rolling again for some states. Thus, with gamma set to 1, the values might not converge except to some resolution of accuracy.
-For complex games, the probability to arriving to any of the states each is lower, and so iterative effect on value results in a lower decimal point value. Perhaps due to floating point limitations (or the theta) setting, the values in value iteration "seem" to converge sooner. In case of policy-iteration the iteration is exited earlier, because it assumes that values will only continue to converge (and not oscillate) which is likely to be the case when gamma < 1. However for complex games, and lower probabilities, policy-iteration and value-iteration likely converge to the same policy due to the floating point limit being the limiting factor (rather than the true mathematical value).
+Considering that this game does not have terminating states, then this game could have an infinite-time-horizon (or an infinite iteration utility). It is not meant to be allowed to set gamma to 1 for problems that have an infinite-time-horizon. The decision to ignore this, is due to existence of terminating action with a probability of 1.0, that should become more advantegous than rolling again for some states. Thus, with gamma set unintuitively to 1.  
+For complex games, the probability to arriving to any of the states each is lower, and so iterative effect on value results in a lower decimal point value. Perhaps due to floating point limitations (or the theta) setting, the values in value iteration "seem" to converge sooner. In case of policy-iteration the iteration is exited earlier, because it assumes that values will only continue to converge (and not oscillate) which is likely to be the case when gamma < 1. For complex games, and thus lower probabilities ratios - policy-iteration and value-iteration are more likely to converge to the same policy due to the floating point limit being the limiting factor (rather than the true mathematical value).
 
 
 ![Theta Indifference](data/policy_vs_value_w_diff_theta.png)  
@@ -74,11 +74,11 @@ Choosing a lower theta such as 0.001 (which gives a better chance at convergence
 ## 2.3 Histogram Comparison
 The final check is more of a sanity check rather than an object validation. That is to look at the histogram of values. A superior agent should have a higher average score that of a random agent, with a distribution skewed to the right (in case of a tail, the tail ought to be on the lower score side).
 
-Looking at the histogram from a equally seeded game0 run over 100 game rounds there is a significant different visible on the historgram. clearly proving that these policies are not identical.  
+Looking at the histogram from an equally seeded game0 run over 100 game rounds there is a significant different visible on the historgram. clearly proving that these policies are not identical.  
 
 ![Theta Indifference](data/Value_versus_policy0-1.0-100.png)  
 
-For the same game run for 1 million rounds comparison of value and policy iteration, the difference is less pronounced but noticable for the same game0, there is a detectable difference as shown in the following graph.  The value iteration has a slightly superio skew value of -1.325, whereas the policy iteration has a skew value of -1.336. However, what is interesting is that the score 13, 14 (the mode value) and 15 are more frequent with policy based iteration, while only the value 16 and 17 are slighly less frequent.  
+For the same game run for 1 million rounds comparison of value and policy iteration, the difference is less pronounced but noticable for the same game0, there is a detectable difference as shown in the following graph.  The value iteration has a slightly superio skew value of -1.325, whereas the policy iteration has a skew value of -1.336. However, what is interesting is that the score 13, 14 (the mode value) and 15 are more frequent with policy-based iteration, while only the value 16 and 17 are slighly less frequent.  
 
 ![Theta Indifference](data/Value_versus_policy0-1.0-1000000.png)  
 (Narrow/Orange is the policy-iteration, Wide/Blue is the value iteration)
@@ -111,7 +111,7 @@ Therefore it was pre-loaded into a dictionary with the following simple for-loop
 All values are iterated if the policy of any state has not converged (to avoid an additional if-statement for each iteration for each state for action pair).  
   
 # 4. Conclusion
-The final proposed agent is a balanced agent in the sense that it can produce comparable or equal results over a large number of runs, when compared to agent utilising value-iteration agent with a very low theta setting. How it will perform in a specific game, will truly depend on the roll of the dice handed.
+The final proposed agent is a balanced agent in the sense that it can produce comparable or equal results over a large game (around 1 million) rounds, when compared to agent utilising value-iteration agent with a very low theta setting. How it will perform in a specific game, will truly depend on the roll of the dice handed.
 
 
 # Reference List
