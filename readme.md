@@ -13,7 +13,7 @@ In view of the Bellman equation, the agent can choose to terminate the game when
 
 In literature there are two popular methods proposed for converging towards a solution for the Bellman equation, that is the value-iteration method and the policy iteration method (Norving and Russel, 2010; Sutton and Barto, 2018; Abbeel, 2012). Value iteration requires an additional parameter to determine at which residual error to stop iteration (hereafter referred to as theta). Theta effectively limits the number of iterations. However, the number of iterations necessary to reach an optimal policy will differ by the complexity of the game (number of dice, dice-values, actions, bias and reward). This would mean that a theta value appropriate for each different game permutation or a way of equating a theta value to the game parameters (or selecting an excessively low value of theta to have a better chance at a reliable setting) is necessary. To avoid this issue, a policy iteration was opted since this will stop the iteration when it seems that the policy has stabilised (even if not truly converged, since a theta value has not been applied). It is known that a policy iteration will converge in fewer iterations (Norving and Russel, 2010). The actual implementation is slightly different from the literature for the sake of optimisation towards execution speed.
 
-# 2. Design Choices and Validation
+# 2. Design Choices and Justification
 Several considerations and tests to validate the final choice of agent was made. The agent was tested against several game scenarios described in the appendix. For comparison reasons a random agent was also included for comparisons in some of the following data.  
 All tests are conducted with the same seed value of 1.
 
